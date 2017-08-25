@@ -1,5 +1,4 @@
 install.packages(c("tm","RTextTools","tidyverse","stringr","lda","textmineR","stringi","glmnet","party","qdap","ridge", "Metrics"))
-
 library(tm)
 library(RTextTools)
 library(tidyverse)
@@ -328,6 +327,22 @@ cor.test(testset1$Prediction1,testset1$mean.swl)
 rmse(testset1$Prediction1,testset1$mean.swl)
 #Cor:0.3589723, p-value < 2.2e-16,RMSE:1.297639
 
+####variable importance
+fit1_varimp <- varimp(fit1)
+fit1_varimp
+s <- sort(-fit1_varimp2)
+fit1_varimp2 <- fit1_varimp[1:50]
+
+library(lattice)
+c <- dotplot(sort(fit1_varimp2),xName ='topics',yName ='mean decrease in accuracy',panel=function (x,y){
+  panel.dotplot(x, y, col='darkblue', pch=20, cex=1.1)
+  panel.abline(v=abs(min(fit1_varimp2)), col = 'red', lty='longdash', lwd=4)
+  panel.abline(v=0, col='blue')
+})
+print(g)
+dev.off()
+
+
 # prediction using liwc
 
 set.seed(6634258)
@@ -443,6 +458,19 @@ cor.test(dep.reg$sum,dep.reg$Prediction)
 
 cor.test(dep.reg$sum,dep.reg$neg.freq)
 #corr=0.1582397, p-value = 0.001818
+
+#naive baseline - betting on the median
+md_dep<-median(dep.reg$sum) #44
+naive_pred<-rep_len(md_dep,nrow(dep.reg)) 
+#this has zero standard deviation, which is a problem for computing correlation. 
+#we add a very small random number to the prediction
+set.seed(945664)
+naive_pred_rnd<-naive_pred+runif(length(naive_pred),0,0.001)
+cor.test(naive_pred_rnd,dep.reg$sum)
+#-0.02110829  p-value = 0.6793
+rmse(naive_pred_rnd,dep.reg$sum)
+# 9.152087
+
 
 #split into training and test set, perform a basic Ridge regression to estimate ability of SWL features for predicting CES-D  
 set.seed(42451)
